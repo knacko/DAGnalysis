@@ -1,0 +1,331 @@
+rm(DAG)
+
+DAG <-  dagitty(paste("dag {", DAG, "}", sep = ""))
+
+DAG <- "age -> cancer.glioma
+age -> cancer.other
+age -> education
+age -> income
+age -> physical.activity
+age -> vice.cigarette
+allergies -> cancer.glioma
+allergies -> cancer.other
+allergies -> vice.cannabis
+allergies -> vice.cigarette
+body.size -> cancer.glioma
+body.size -> cancer.other
+body.size -> noncancer.disease
+cancer.other -> cancer.glioma
+cancer.other -> drug.nsaid
+cancer.other -> drug.statin
+cancer.other -> drug.steroid
+drug.aspirin -> drug.nsaid
+drug.aspirin -> noncancer.disease
+drug.nsaid -> drug.steroid
+drug.statin -> cancer.glioma
+drug.steroid -> cancer.glioma
+education -> cancer.glioma
+education -> mental.activity
+education <-> income
+ethnicity -> body.size
+ethnicity -> cancer.glioma
+ethnicity -> education
+ethnicity -> noncancer.disease
+gender -> body.size
+gender -> cancer.glioma
+gender -> income
+gender -> noncancer.disease
+income -> cancer.glioma
+mental.activity -> cancer.glioma
+mental.activity -> noncancer.disease
+migraines -> cancer.glioma
+migraines <-> noncancer.disease
+noncancer.disease -> cancer.glioma
+noncancer.disease -> drug.nsaid
+noncancer.disease -> drug.statin
+noncancer.disease -> drug.steroid
+physical.activity -> body.size
+physical.activity -> cancer.other
+physical.activity -> noncancer.disease
+vice.alcohol -> cancer.other
+vice.alcohol -> noncancer.disease
+vice.alcohol <-> vice.caffeine
+vice.alcohol <-> vice.cannabis
+vice.caffeine -> cancer.glioma
+vice.caffeine -> cancer.other
+vice.caffeine -> migraines
+vice.caffeine -> vice.cigarette
+vice.caffeine <-> vice.cannabis
+vice.cannabis -> cancer.other
+vice.cannabis -> migraines
+vice.cannabis -> noncancer.disease
+vice.cannabis -> vice.cigarette
+vice.cigarette -> cancer.other
+vice.cigarette -> migraines
+vice.cigarette -> noncancer.disease
+vice.cigarette -> physical.activity"
+
+
+DAG4 <-"age -> cancer.glioma
+age -> cancer.other
+age -> education
+age -> income
+age -> physical.activity
+allergies -> cancer.glioma
+allergies -> cancer.other
+allergies -> vice.cannabis
+allergies -> vice.cigarette
+body.size -> cancer.glioma
+body.size -> cancer.other
+body.size -> noncancer.disease
+cancer.other -> cancer.glioma
+cancer.other -> drug.nsaid
+cancer.other -> drug.statin
+cancer.other -> drug.steroid
+drug.aspirin -> drug.nsaid
+drug.aspirin -> noncancer.disease
+drug.nsaid -> drug.steroid
+drug.statin -> cancer.glioma
+drug.steroid -> cancer.glioma
+education -> cancer.glioma
+education -> mental.activity
+education <-> income
+ethnicity -> body.size
+ethnicity -> cancer.glioma
+ethnicity -> education
+ethnicity -> noncancer.disease
+gender -> body.size
+gender -> cancer.glioma
+gender -> income
+gender -> noncancer.disease
+income -> cancer.glioma
+mental.activity -> cancer.glioma
+mental.activity -> noncancer.disease
+migraines -> cancer.glioma
+migraines <-> noncancer.disease
+noncancer.disease -> cancer.glioma
+noncancer.disease -> drug.nsaid
+noncancer.disease -> drug.statin
+noncancer.disease -> drug.steroid
+physical.activity -> body.size
+physical.activity -> cancer.glioma
+physical.activity -> cancer.other
+physical.activity -> noncancer.disease
+vice.alcohol -> cancer.other
+vice.alcohol -> noncancer.disease
+vice.alcohol <-> vice.caffeine
+vice.alcohol <-> vice.cannabis
+vice.alcohol <-> vice.cigarette
+vice.caffeine -> cancer.glioma
+vice.caffeine -> cancer.other
+vice.caffeine -> migraines
+vice.caffeine <-> vice.cannabis
+vice.caffeine <-> vice.cigarette
+vice.cannabis -> cancer.other
+vice.cannabis -> migraines
+vice.cannabis -> noncancer.disease
+vice.cannabis <-> vice.cigarette
+vice.cigarette -> cancer.other
+vice.cigarette -> migraines
+vice.cigarette -> noncancer.disease"
+
+DAG3 <- "age -> cancer.glioma
+age -> cancer.other
+age -> education
+age -> income
+age -> physical.activity
+allergies -> cancer.glioma
+allergies -> cancer.other
+allergies -> vice.cannabis
+allergies -> vice.cigarette
+body.size -> cancer.glioma
+body.size -> cancer.other
+body.size -> noncancer.disease
+cancer.other -> cancer.glioma
+cancer.other -> drug.nsaid
+cancer.other -> drug.statin
+cancer.other -> drug.steroid
+drug.aspirin -> drug.nsaid
+drug.aspirin -> noncancer.disease
+drug.nsaid -> drug.steroid
+drug.statin -> cancer.glioma
+drug.steroid -> cancer.glioma
+education -> cancer.glioma
+education -> mental.activity
+education <-> income
+ethnicity -> body.size
+ethnicity -> cancer.glioma
+ethnicity -> education
+ethnicity -> noncancer.disease
+gender -> body.size
+gender -> cancer.glioma
+gender -> income
+gender -> noncancer.disease
+income -> cancer.glioma
+mental.activity -> cancer.glioma
+mental.activity -> noncancer.disease
+migraines -> cancer.glioma
+migraines <-> noncancer.disease
+noncancer.disease -> cancer.glioma
+noncancer.disease -> drug.nsaid
+noncancer.disease -> drug.statin
+noncancer.disease -> drug.steroid
+physical.activity -> body.size
+physical.activity -> cancer.glioma
+physical.activity -> cancer.other
+physical.activity -> noncancer.disease
+vice.alcohol -> cancer.other
+vice.alcohol -> noncancer.disease
+vice.alcohol <-> vice.caffeine
+vice.alcohol <-> vice.cannabis
+vice.alcohol <-> vice.cigarette
+vice.caffeine -> cancer.glioma
+vice.caffeine -> cancer.other
+vice.caffeine -> migraines
+vice.caffeine -> vice.cigarette
+vice.caffeine <-> vice.cannabis
+vice.cannabis -> cancer.other
+vice.cannabis -> migraines
+vice.cannabis -> noncancer.disease
+vice.cannabis -> vice.cigarette
+vice.cigarette -> cancer.other
+vice.cigarette -> migraines
+vice.cigarette -> noncancer.disease"
+
+
+
+
+DAGd2 <- "age -> cancer.glioma
+age -> cancer.other
+age -> education
+age -> income
+age -> physical.activity
+allergies -> cancer.glioma
+allergies -> cancer.other
+allergies -> vice.cannabis
+allergies -> vice.cigarette
+body.size -> cancer.glioma
+body.size -> cancer.other
+body.size -> noncancer.disease
+cancer.other -> cancer.glioma
+cancer.other -> drug.nsaid
+cancer.other -> drug.statin
+cancer.other -> drug.steroid
+drug.aspirin -> drug.nsaid
+drug.aspirin -> noncancer.disease
+drug.nsaid -> drug.steroid
+drug.statin -> cancer.glioma
+drug.steroid -> cancer.glioma
+education -> cancer.glioma
+education -> mental.activity
+education <-> income
+ethnicity -> body.size
+ethnicity -> cancer.glioma
+ethnicity -> education
+ethnicity -> noncancer.disease
+gender -> body.size
+gender -> cancer.glioma
+gender -> income
+gender -> noncancer.disease
+income -> cancer.glioma
+mental.activity -> cancer.glioma
+mental.activity -> noncancer.disease
+migraines -> cancer.glioma
+migraines <-> noncancer.disease
+noncancer.disease -> cancer.glioma
+noncancer.disease -> drug.nsaid
+noncancer.disease -> drug.statin
+noncancer.disease -> drug.steroid
+physical.activity -> body.size
+physical.activity -> cancer.glioma
+physical.activity -> cancer.other
+physical.activity -> noncancer.disease
+vice.alcohol -> cancer.other
+vice.alcohol -> noncancer.disease
+vice.alcohol <-> vice.caffeine
+vice.alcohol <-> vice.cannabis
+vice.caffeine -> cancer.glioma
+vice.caffeine -> cancer.other
+vice.caffeine -> migraines
+vice.caffeine -> vice.cigarette
+vice.caffeine <-> vice.cannabis
+vice.cannabis -> cancer.other
+vice.cannabis -> migraines
+vice.cannabis -> noncancer.disease
+vice.cannabis -> vice.cigarette
+vice.cigarette -> cancer.glioma
+vice.cigarette -> cancer.other
+vice.cigarette -> migraines
+vice.cigarette -> noncancer.disease"
+
+
+
+
+
+
+
+
+DAGdefault <- "age -> cancer.glioma
+  age -> cancer.other
+  age -> education
+  age -> income
+  age -> physical.activity
+  allergies -> cancer.glioma
+  allergies -> cancer.other
+  allergies -> vice.cannabis
+  allergies -> vice.cigarette
+  body.size -> cancer.glioma
+  body.size -> cancer.other
+  body.size -> noncancer.disease
+  cancer.other -> cancer.glioma
+  cancer.other -> drug.nsaid
+  cancer.other -> drug.statin
+  cancer.other -> drug.steroid
+  drug.aspirin -> drug.nsaid
+  drug.aspirin -> noncancer.disease
+  drug.nsaid -> drug.steroid
+  drug.statin -> cancer.glioma
+  drug.steroid -> cancer.glioma
+  education -> cancer.glioma
+  education -> mental.activity
+  education <-> income
+  ethnicity -> body.size
+  ethnicity -> cancer.glioma
+  ethnicity -> education
+  ethnicity -> noncancer.disease
+  gender -> body.size
+  gender -> cancer.glioma
+  gender -> income
+  gender -> noncancer.disease
+  income -> cancer.glioma
+  mental.activity -> cancer.glioma
+  mental.activity -> noncancer.disease
+  migraines -> cancer.glioma
+  migraines <-> noncancer.disease
+  noncancer.disease -> cancer.glioma
+  noncancer.disease -> drug.nsaid
+  noncancer.disease -> drug.statin
+  noncancer.disease -> drug.steroid
+  physical.activity -> body.size
+  physical.activity -> cancer.glioma
+  physical.activity -> cancer.other
+  physical.activity -> noncancer.disease
+  vice.alcohol -> cancer.other
+  vice.alcohol -> noncancer.disease
+  vice.alcohol <-> vice.caffeine
+  vice.alcohol <-> vice.cannabis
+  vice.caffeine -> cancer.glioma
+  vice.caffeine -> cancer.other
+  vice.caffeine -> migraines
+  vice.caffeine -> vice.cigarette
+  vice.caffeine <-> vice.cannabis
+  vice.cannabis -> cancer.other
+  vice.cannabis -> migraines
+  vice.cannabis -> noncancer.disease
+  vice.cannabis -> vice.cigarette
+  vice.cigarette -> cancer.other
+  vice.cigarette -> migraines
+  vice.cigarette -> noncancer.disease
+"
+
+
