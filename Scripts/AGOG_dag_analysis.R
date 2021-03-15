@@ -60,8 +60,9 @@ calculate <- function (dag, df, exposure, outcome) {
 ### Model (All) ###################################
 
 Model.crude <- AGOG.model(AGOG.dataset)
-Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity"))
-Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity"))
+Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
+Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
+Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
 
 ## Create a blank workbook
 wb <- createWorkbook()
@@ -84,7 +85,7 @@ writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
 
 ## Save workbook to working directory
 date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-path <- paste0("..\\Generated\\",date,"\\")
+path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,"/")
 
 dir.create(path)
 
