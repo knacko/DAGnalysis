@@ -59,44 +59,58 @@ calculate <- function (dag, df, exposure, outcome) {
 
 ### Model (All) ###################################
 
-Model.crude <- AGOG.model(AGOG.dataset)
-Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
-Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
-Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
-
-## Create a blank workbook
-wb <- createWorkbook()
-
-addWorksheet(wb, "Crude")
-addWorksheet(wb, "Adjusted")
-addWorksheet(wb, "DAG")
-
-addWorksheet(wb, "Significant Crude")
-addWorksheet(wb, "Significant Adjusted")
-addWorksheet(wb, "Significant DAG")
-
-writeData(wb, "Crude", Model.crude)
-writeData(wb, "Adjusted", Model.adjusted)
-writeData(wb, "DAG", Model.DAG)
-
-writeData(wb, "Significant Crude", filter(Model.crude,Sigificance != " "))
-writeData(wb, "Significant Adjusted", filter(Model.adjusted,Sigificance != " "))
-writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
-
-## Save workbook to working directory
-date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,"/")
-
-dir.create(path)
-
-saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
-save.image(file=paste0(path,date,"_R_image.rda"))
-write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
-write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
 
 
-rm(wb)
-rm(i)
+tryCatch ({
+  
+  Model.crude <- AGOG.model(AGOG.dataset)
+  Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
+  Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
+  Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
+  
+  ## Create a blank workbook
+  wb <- createWorkbook()
+  
+  addWorksheet(wb, "Crude")
+  addWorksheet(wb, "Adjusted")
+  addWorksheet(wb, "DAG")
+  
+  addWorksheet(wb, "Significant Crude")
+  addWorksheet(wb, "Significant Adjusted")
+  addWorksheet(wb, "Significant DAG")
+  
+  writeData(wb, "Crude", Model.crude)
+  writeData(wb, "Adjusted", Model.adjusted)
+  writeData(wb, "DAG", Model.DAG)
+  
+  writeData(wb, "Significant Crude", filter(Model.crude,Sigificance != " "))
+  writeData(wb, "Significant Adjusted", filter(Model.adjusted,Sigificance != " "))
+  writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
+  
+  ## Save workbook to working directory
+  date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  
+  identifier <- "fixed dag"
+  
+  path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date," - ",identifier,"/")
+  
+  dir.create(path)
+  
+  saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
+  save.image(file=paste0(path,date,"_R_image.rda"))
+  write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
+  write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
+  write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
+          
+  rm(wb)
+  rm(i) 
+},
+error=function(cond) {
+  message(cond)
+})
+
+
+
 
 # Extract the p-value from the summary(lm)
 summary.return.pval <- function( object, ... )
