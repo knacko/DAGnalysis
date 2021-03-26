@@ -7,6 +7,8 @@ library(tidyverse)
 library(mice)
 library(magrittr)
 library(openxlsx)
+library(Cairo)
+
 setwd("C:\\Users\\geekb\\Documents\\School\\Internships\\CBDRH\\Data\\Data from CBDRH")
 
 ### End setup data ######################
@@ -187,6 +189,152 @@ summary(AGOG.dataset)
 summary(AGOG.formatted)
 
 md.pattern(AGOG.dataset,rotate.names=TRUE)
+
+
+
+### Compare stats between the pre-imputation and post- #######################3
+
+
+
+income <- c("income"="Income (Thousands AUS $)","1"="0-50","2"="50-100","3"="100-150","4"="> 150")
+body.size <- c("body.size"="Body Mass Index (BMI)","1"="< 18.5","2"="18.5-24.9","3"="25-29.9","4"="> 30")
+physical.activity <- c("physical.activity"="Lifetime physical activity (MET-h/wk)","1"="< 24","2"="24-47","3"="> 47")
+vice.cannabis <- c("vice.cannabis"="Cannabis Usage","0"="Never","1"="Former","2"="Current")
+
+# before <- c("income","1","2","3","4")
+# after <- c("Income (Thousands AUD)","0-50","50-100","100-150","> 150")
+# income <- data.frame(before,after)
+# 
+# 
+# before <- c("body.size","1","2","3","4")
+# after <- c("Body Mass Index (BMI)","< 18.5","18.5-24.9","25-29.9","> 30")
+# body.size <- as.data.frame(before,after)
+# 
+# before <- c("physical.activity","1","2","3")
+# after <- c("Lifetime physical activity (MET-h/wk)","< 24","24-47","> 47")
+# physical.activity <- as.data.frame(before,after)
+# 
+# before <- c("vice.cannabis","1","2","3")
+# after <- c("Cannabis Usage","Never","Former (> 1 ypd)","Current")
+# vice.cannabis <- as.data.frame(before,after)
+
+
+df <- s1
+lookup <- get(colnames(stats)[1])
+
+recodeDF <- function(df,lookup) {
+  
+  lookup <- data.frame(orig = names(lookup),new = lookup)
+  
+  suppressWarnings(
+  df[] <- lapply(df, function(x) 
+    if (is.na(lookup$new[match(x,lookup$orig)])) {x} else {
+      lookup$new[match(x,lookup$orig)]
+    })
+  )
+  
+  # suppressWarnings(
+  #   colnames(df) <- unlist(lapply(colnames(df), function(x) 
+  #     if (is.na(lookup$new[match(x,lookup$orig)])) {x} else {
+  #       lookup$new[match(x,lookup$orig)]
+  #     }))
+  # )
+  
+  return(df)
+}
+
+cols <- which(t(col_count(AGOG.formatted,count=count.char,append=FALSE)) > 10)
+
+
+CairoWin()
+
+plots <- lapply(cols, function(x) {
+  if(cols[1]==x) {showY = TRUE} else {showY = FALSE}
+  
+  plot_imputed(AGOG.formatted[x],AGOG.dataset[x],showY,type="scatter")})
+
+ggpubr::ggarrange(plotlist = plots, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+
+
+
+
+
+plot_imputed(df1,df2,type="e")
+
+
+plot_imputed <- function(df1,df2, showY = FALSE, type="bar") {
+  
+  df1 <<- df1
+  df2 <<- df2
+  
+  t1 <- "Raw data"
+  t2 <- "After imputation"
+  
+  s1 <- as.data.frame(dplyr::count(df1,df1[1]))
+  s1$type <- t1
+  s2 <- as.data.frame(dplyr::count(df2,df2[1])) 
+  s2$type <- t2
+  
+  stats <- rbind(s2,s1)
+  i <- which(is.na(stats[1]))
+  blank <- stats[i,2]
+  stats <- stats[-c(i),]
+  lookup <- get(colnames(stats)[1])
+  stats <- recodeDF(stats,lookup)
+  stats$type <- factor(stats$type,level=c(t1,t2))
+  stats[[1]] <- factor(stats[[1]],level=tail(lookup,-1))
+  
+  xlabel <- lookup[1]
+  
+  if (type == "bar") {
+  
+  gg <- ggplot(data = stats, 
+              aes_string(x = colnames(stats)[1], y = colnames(stats)[2], fill = colnames(stats)[3])) + 
+                 geom_bar(stat = "identity",position="dodge", colour="black") +
+                 scale_fill_manual(values=c("#FFFFFF", "#999999")) +
+                labs(x=xlabel,y=(if(showY) "Number of individuals" else "")) + 
+                theme(legend.title=element_blank(),text = element_text(size=15))#,axis.text.x = element_text(angle = 45, hjust = 1))
+  } else {
+    
+    gg <- ggplot(data = stats, 
+                 aes_string(x = colnames(stats)[1], y = colnames(stats)[2], group = colnames(stats)[3])) + 
+      geom_point(size=3) + geom_line(size=1,aes_string(linetype=colnames(stats)[3])) +
+      scale_fill_manual(values=c("#FFFFFF", "#999999")) +
+      labs(x=xlabel,y=(if(showY) "Number of individuals" else "")) + 
+      theme_bw()  +
+      theme(legend.title=element_blank(),text = element_text(size=15))#,axis.text.x = element_text(angle = 45, hjust = 1))
+    
+  }
+
+ gg
+  
+}
+
+plot_scatter <- function(df1,df2, showY = FALSE) {
+  
+  df1 <<- df1
+  df2 <<- df2
+  
+  t1 <- "Raw data"
+  t2 <- "After imputation"
+  
+  s1 <- as.data.frame(dplyr::count(df1,df1[1]))
+  s1$type <- t1
+  s2 <- as.data.frame(dplyr::count(df2,df2[1])) 
+  s2$type <- t2
+  
+  stats <- rbind(s2,s1)
+  i <- which(is.na(stats[1]))
+  blank <- stats[i,2]
+  stats <- stats[-c(i),]
+  stats$type <- factor(stats$type,level=c(t1,t2))
+  
+
+  
+  gg
+  
+}
+
 
 
 ### Functions ######################
