@@ -86,7 +86,7 @@ for (f in files) {
   }
 }
 
-AGOG.raw[is.na(AGOG.raw)] <- ".x"
+#AGOG.raw[is.na(AGOG.raw)] <- ".x"
 
 AGOG.raw %<>% drop_na(caco_cde) #Remove unassigned cases
 AGOG.raw <- AGOG.raw[-which(row_count(AGOG.raw,count=".x",append=FALSE)$rowcount > 100),] #Remove mostly unanswered
@@ -105,7 +105,7 @@ goodcols <- c("age", "gender","ethnicity", "education", "income","body.size",
               "vice.cannabis", "vice.caffeine",
               "drug.aspirin", "drug.nsaid", "drug.steroid", "drug.statin", 
               "allergies", "migraines",
-              "cancer.glioma", "cancer.other", "noncancer.disease")
+              "cancer.glioma", "cancer.other", "noncancer.disease","state")
 
 AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols))
 
@@ -115,6 +115,8 @@ factors <- c("vice.alcohol","education","gender","income","vice.cigarette","phys
 numerics <- c("vice.caffeine","mental.activity","age")
 booleans <- c("allergies","cancer.other","cancer.glioma","drug.aspirin","drug.nsaid","ethnicity",
               "drug.statin","drug.steroid","migraines","noncancer.disease")
+
+AGOG.formatted$state <- factor(AGOG.formatted$state)
 
 AGOG.formatted %<>% mutate_at(factors, funs(as.numeric(as.character(.))))
 AGOG.formatted %<>% mutate_at(factors, factor)
@@ -134,16 +136,17 @@ md.pattern(AGOG.formatted,rotate.names=TRUE)
 count.char <- '.x'
 count.char <- NA
 
-count.data <- AGOG.formatted
-
-row_count(count.data,count=count.char,append=FALSE)             ### By row
-length(which(row_count(count.data,count=count.char,append=FALSE)>0)) ### Rows missing values
-t(col_count(count.data,count=count.char,append=FALSE))             ### By col
-colSums(row_count(count.data,count=count.char,append=FALSE))    ### Entire DF
+row_count(AGOG.formatted,count=count.char,append=FALSE)             ### By row
+length(which(row_count(AGOG.formatted,count=count.char,append=FALSE)>0)) ### Rows missing values
+sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE)))             ### By col
+colSums(row_count(AGOG.formatted,count=count.char,append=FALSE))    ### Entire DF
 
 ### Get percentage of .x
 
-head(sort(t(col_count(count.data,count=count.char,append=FALSE))[,1],decreasing = TRUE)/nrow(count.data)*100)
+head(sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE))[,1],decreasing = TRUE)/nrow(AGOG.formatted)*100)
+
+
+
 
 ### Remove specific columns
 
