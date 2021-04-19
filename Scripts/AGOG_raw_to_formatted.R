@@ -3,7 +3,8 @@ setwd("C:\\Users\\geekb\\Documents\\School\\Internships\\CBDRH\\Data\\Data from 
 list.files(getwd())
 getwd()
 
-list.of.packages <- c("magrittr","openxlsx","qdapTools","dplyr","tools","epiDisplay","tidyr","R.utils","hablar","stringr","sjmisc","pastecs")
+list.of.packages <- c("magrittr","openxlsx","qdapTools","dplyr","tools","epiDisplay","tidyr","R.utils",
+                      "hablar","stringr","sjmisc","pastecs")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 

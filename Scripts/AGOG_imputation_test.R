@@ -119,7 +119,6 @@ summary(pool(df.model))
 
 df.anova <- mi.anova(mi.res=df.imputes,"cancer.glioma ~ totalpa")
 
-
 densityplot(df.imputes)
 stripplot(df.imputes, pch = 20, cex = 1.2)
 
@@ -178,10 +177,12 @@ anti_join(df1, df2, by="cec_upn")
 
 ### Impute master AGOG data (all in proper data types and containing only DAG nodes)
 
-AGOG.imputes <- mice(AGOG.formatted, method="cart", m=5, maxit=10, seed=123, 
+m <- 35
+
+AGOG.imputes <- mice(AGOG.formatted, method="cart", m=m, maxit=100, seed=123, 
                    pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
-AGOG.dataset <- complete(AGOG.imputes,2)
+AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
 #AGOG.dataset$vice.cannabis %<>% as.logical() #Not sure why this is necessary
 

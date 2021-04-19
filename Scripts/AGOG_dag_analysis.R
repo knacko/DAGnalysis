@@ -1,4 +1,4 @@
-options(scipen=999)
+options(scipen=2)
 library(dagitty)
 library(miceadds)
 library(broom)
@@ -24,9 +24,6 @@ tidy(fit[[1]], exponentiate =  TRUE, conf.int = TRUE)%>%
   mutate_if(is.numeric, round, digits =4)
 
 conf <- unlist(adjustmentSets(DAG, "drug.statin", "cancer.glioma", effect="total" ), use.names=FALSE)
-
-
-
 
 calculate <- function (dag, df, exposure, outcome) {
   
@@ -63,6 +60,8 @@ calculate <- function (dag, df, exposure, outcome) {
 
 tryCatch ({
   
+  #DAG <- read_file()
+  
   Model.crude <- AGOG.model(AGOG.dataset)
   Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
   Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
@@ -90,9 +89,9 @@ tryCatch ({
   ## Save workbook to working directory
   date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   
-  identifier <- "fixed dag"
+  identifier <- ""
   
-  path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date," - ",identifier,"/")
+  path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
   
   dir.create(path)
   
@@ -101,15 +100,12 @@ tryCatch ({
   write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
   write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
   write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
-          
-  rm(wb)
-  rm(i) 
+  
+  rm(wb,path,date)
 },
 error=function(cond) {
   message(cond)
 })
-
-
 
 
 # Extract the p-value from the summary(lm)
@@ -127,59 +123,74 @@ summary.return.pval <- function( object, ... )
 
 AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
   
-  if(is.null(exposure)) exposure <- names(data)
+  if(is.null(exposure)) exposure <- names(data$data)
   exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","cancer.glioma",confounders)]
   
   exposure.variables <- data.frame(Variable=character(), OR=numeric(), CI2.5=numeric(), CI97.5=numeric(), "P.value"=numeric(),"Sigificance"=character(),"Confounders"=character())
   
   for(i in 1:length(exposure)) { 
-  
+    
     adjSets <- adjustmentSets(DAG, exposure[i], "cancer.glioma", effect="total" )
     
     for(j in 1:length(adjSets)) { 
       
       exposure.variables %<>% rbind(
         AGOG.model(data,exposure[i],
-        x <- union(unlist(adjSets[j], use.names=FALSE),confounders)))
-  
+                   x <- union(unlist(adjSets[j], use.names=FALSE),confounders)))
+      
     }
   }
   
   exposure.variables$Confounders %<>% strsplit(", ") %>% lapply(function(x) paste(x[!x %in% confounders], collapse=", ")) %>% unlist()
   
   return(exposure.variables)
-
+  
 }
 
 ### Model (Crude and Adjusted) ##################################
 
 AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
   
-  if(is.null(exposure)) exposure <- names(data)
+  if(is.null(exposure)) exposure <- names(data[[1]])
   
   exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","cancer.glioma",confounders)]
   
   exposure.variables <- data.frame(Variable=character(), OR=numeric(), CI2.5=numeric(), CI97.5=numeric(), "P.value"=numeric(),"Sigificance"=character(),"Confounders"=character())
   
-  model <- vector(mode = "list", length = length(exposure))
-  confounders.s <- if (length(confounders) == 0) "" else paste(" +",paste(confounders,collapse=" + "))
-  
+  confounders.s <- if (length(confounders) == 0) "" else paste("+",paste(confounders,collapse=" + "))
+
   model <- lapply(exposure, function(i) {
-      glm.cluster(as.formula(paste("cancer.glioma ~ ",i,confounders.s)),
-      data = data,
-      family=binomial,
-      cluster="ufn_primary")}
-  )
+
+    form <- as.formula(paste("cancer.glioma ~",i,confounders.s))
+    
+    mod <- lapply(data, function(d){
+      glm.cluster(d, formula=form,family=binomial,cluster="ufn_primary" )
+    })
+    
+    # mod <- lapply(data, function(d){
+    #   lm.cluster(d, formula=form,cluster="ufn_primary" )
+    # })
+    # beep()
+
+    cmod <- mitools::MIextract( mod, fun=coef)
+    semod <- lapply( mod, FUN=function(mm){
+      smm <- summary(mm[[1]])
+      smm$coefficients[,"Std. Error"]
+    } )
+    
+    modpool <- miceadds::pool_mi( qhat=cmod, se=semod )
+    
+  })
   
   for(i in 1:length(model)) { 
     
     glm <- model[[i]]
     
-    capture.var <- 2:max(2,(nlevels(data[,exposure[i]])))
+    capture.var <- 2:max(2,(nlevels(data[[1]][,exposure[i]])))
     
     exposure.variable <- cbind(OR = exp(coef(glm)), exp(confint(glm)),
-                               "P.value" = summary.return.pval(glm))[capture.var,]
-       
+                               "P.value" = summary(glm)$p)[capture.var,]
+    
     if (length(capture.var)==1) exposure.variable %<>% as.list()
     
     exposure.variable <- cbind(data.frame("Variable"=names(coef(glm))[capture.var]),data.frame(exposure.variable))
@@ -211,15 +222,15 @@ AGOG.adjusted.confounders <- c() #"age","gender"
 AGOG.adjusted.confounders.s <- if (length(AGOG.adjusted.confounders) == 0) "" else paste(" +",paste(AGOG.adjusted.confounders,collapse=" + "))
 
 AGOG.adjusted.model <- lapply(cols, 
-         function(i) {
-           glm.cluster(as.formula(paste("cancer.glioma ~ ",i,AGOG.adjusted.confounders.s)),
-                      data = AGOG.adjusted.data,
-                      family=binomial,
-                      cluster="ufn_primary")}
-         )
+                              function(i) {
+                                glm.cluster(as.formula(paste("cancer.glioma ~ ",i,AGOG.adjusted.confounders.s)),
+                                            data = AGOG.adjusted.data,
+                                            family=binomial,
+                                            cluster="ufn_primary")}
+)
 
 for(i in 1:length(AGOG.adjusted.model)) { 
-
+  
   AGOG.glm <- AGOG.adjusted.model[[i]]
   
   capture.var <- 2:(length(coef(AGOG.glm))-length(AGOG.adjusted.confounders)) 
@@ -229,7 +240,7 @@ for(i in 1:length(AGOG.adjusted.model)) {
                                                   "P.value" = summary.return.pval(AGOG.glm))[capture.var,]))
   } else {
     exposure.variable <- data.frame(cbind(OR = exp(coef(AGOG.glm)), exp(confint(AGOG.glm)),
-                                                  "P.value" = summary.return.pval(AGOG.glm))[capture.var,])
+                                          "P.value" = summary.return.pval(AGOG.glm))[capture.var,])
   }
   
   exposure.variable <- cbind(data.frame("Variable"=names(coef(AGOG.glm))[capture.var]),exposure.variable)
@@ -261,8 +272,8 @@ ggplot(AGOG.crude.data, aes(x=cancer.glioma, y=vice.alcohol)) + geom_boxplot()
 
 
 lm1 <- lm.cluster(as.formula("cancer.glioma ~ vice.alcohol + age + gender"),
-           data = AGOG.crude.data,
-           cluster="ufn_primary")
+                  data = AGOG.crude.data,
+                  cluster="ufn_primary")
 coef(lm1)
 vcov(lm1)
 
