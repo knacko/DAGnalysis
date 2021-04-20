@@ -1,74 +1,31 @@
-### Setup data ##########################
 
-library(VIM)
-library(dplyr)
-library(compare)
-library(tidyverse)
-library(mice)
-library(magrittr)
-library(openxlsx)
-library(Cairo)
+### Impute master AGOG data (all in proper data types and containing only DAG nodes)
 
-setwd("C:\\Users\\geekb\\Documents\\School\\Internships\\CBDRH\\Data\\Data from CBDRH")
+m <- 35
 
-### End setup data ######################
+AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=20, seed=123, 
+                     pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
-dat <- AGOGdata %>% dplyr::select(cec_upn,age,gender,body.size,education,income,vice.alcohol,physical.activity,mental.activity)
+AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
-dat %<>% mutate(
-  age = as.numeric(age),
-  gender = as.factor(gender),
-  body.size = as.numeric(body.size),
-  education = as.factor(education),
-  income = as.factor(income),
-  vice.alcohol = as.factor(vice.alcohol),
-  physical.activity = as.numeric(physical.activity),
-  mental.activity = as.numeric(mental.activity)
-)
+AGOG.imputes.graph <- rename(AGOG.formatted,BMI=body.size)
+AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=50, seed=123, 
+                           pred=quickpred(AGOG.imputes.graph, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
-sapply(dat, function(x) sum(is.na(x)))
+plot(AGOG.imputes.graph,y=c("income","physical.activity","BMI"))
 
-original <- dat
-
-init = mice(dat, maxit=0) 
-meth = init$method
-predM = init$predictorMatrix
-predM[, c("cec_upn")]=0
-
-meth[c("age","body.size","physical.activity","mental.activity")]="norm" 
-meth[c("gender","vice.alcohol")]="logreg" 
-meth[c("education","income")]="polyreg"
-
-set.seed(103)
-tempData = mice(dat, method=meth, predictorMatrix=predM, m=25)
-
-tempData <- mice(dat, method="cart", m=5, maxit=10, seed=123, 
-            pred=quickpred(dat, method="spearman"))
-
-densityplot(tempData)
-
-completedData <- complete(tempData,4)
-
-original <- stat.desc(na.omit(dat$physical.activity)) %>% round(digits = 2)
-
-imputed <- stat.desc(completedData$physical.activity) %>% round(digits = 2)
-
-cbind(original, imputed)
-
-plot(tempData, c("physical.activity","body.size"))
-
-stripplot(tempData, pch = 20, cex = 1.2)
-xyplot(tempData,physical.activity ~ age+gender+body.size+education+income+vice.alcohol+mental.activity,pch=18,cex=1)
-
-modelFit1 <- with(tempData,glm(physical.activity ~ age+gender+body.size+education+income+vice.alcohol+mental.activity))
-
-modelFit1 <- with(tempData,glm(physical.activity ~ body.size))
-summary(pool(modelFit1))
+inc <- densityplot(AGOG.imputes.graph, ~income,ylab="")
+phys <- densityplot(AGOG.imputes.graph, ~physical.activity,ylab="")
+BMI <- densityplot(AGOG.imputes.graph, ~BMI,ylab="")
+grid.arrange(inc,phys,BMI, ncol=3,left="Density")
 
 
-### Select file to impute ############################
+#AGOG.dataset$vice.cannabis %<>% as.logical() #Not sure why this is necessary
 
+summary(AGOG.dataset)
+summary(AGOG.formatted)
 
+md.pattern(AGOG.dataset,rotate.names=TRUE)
 
 ### Imputing Physical activity ################
 
@@ -174,36 +131,6 @@ comparedf <- function(df1, df2, by.col) {
   
   
 anti_join(df1, df2, by="cec_upn")
-
-### Impute master AGOG data (all in proper data types and containing only DAG nodes)
-
-m <- 35
-
-AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=20, seed=123, 
-                   pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
-
-AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
-
-AGOG.imputes.graph <- rename(AGOG.formatted,BMI=body.size)
-AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=50, seed=123, 
-                     pred=quickpred(AGOG.imputes.graph, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
-
-plot(AGOG.imputes.graph,y=c("income","physical.activity","BMI"))
-
-inc <- densityplot(AGOG.imputes.graph, ~income,ylab="")
-phys <- densityplot(AGOG.imputes.graph, ~physical.activity,ylab="")
-BMI <- densityplot(AGOG.imputes.graph, ~BMI,ylab="")
-grid.arrange(inc,phys,BMI, ncol=3,left="Density")
-
-
-#AGOG.dataset$vice.cannabis %<>% as.logical() #Not sure why this is necessary
-
-summary(AGOG.dataset)
-summary(AGOG.formatted)
-
-md.pattern(AGOG.dataset,rotate.names=TRUE)
-
-
 
 ### Compare stats between the pre-imputation and post- #######################3
 
