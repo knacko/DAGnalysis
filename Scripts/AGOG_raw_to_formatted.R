@@ -126,7 +126,7 @@ AGOG.formatted %<>% mutate_at(numerics, funs(as.numeric(as.character(.))))
 
 AGOG.formatted %<>% mutate_at(booleans, factor)
 AGOG.formatted %<>% mutate_at(booleans, funs(recode(.,"Yes" = TRUE, "No" = FALSE, .default = NA)))
-AGOG.formatted %<>% mutate_at(booleans, funs(as.logical(as.integer(.) - 1L)))
+#AGOG.formatted %<>% mutate_at(booleans, funs(as.logical(as.integer(.) - 1L)))
 
 rm(booleans,factors,goodcols,numerics)
 
@@ -229,30 +229,6 @@ AGOGdata$gender <- as.factor(AGOGdata$gender_l)
 ### From (A), parse activity + body size ##################
 
 AGOGdata$physical_activity <- AGOGdata$totalpa_cat
-
-
-
-
-### Binary evaluator #########################3
-
-binary_eval    function(temp_F)
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

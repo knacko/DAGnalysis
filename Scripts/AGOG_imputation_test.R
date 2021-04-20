@@ -179,7 +179,7 @@ anti_join(df1, df2, by="cec_upn")
 
 m <- 35
 
-AGOG.imputes <- mice(AGOG.formatted, method="cart", m=m, maxit=100, seed=123, 
+AGOG.imputes <- mice(AGOG.formatted, method="cart", m=m, maxit=25, seed=123, 
                    pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))

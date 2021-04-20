@@ -123,7 +123,7 @@ summary.return.pval <- function( object, ... )
 
 AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
   
-  if(is.null(exposure)) exposure <- names(data$data)
+  if(is.null(exposure)) exposure <- names(data[[1]])
   exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","cancer.glioma",confounders)]
   
   exposure.variables <- data.frame(Variable=character(), OR=numeric(), CI2.5=numeric(), CI97.5=numeric(), "P.value"=numeric(),"Sigificance"=character(),"Confounders"=character())
@@ -164,13 +164,8 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
     form <- as.formula(paste("cancer.glioma ~",i,confounders.s))
     
     mod <- lapply(data, function(d){
-      glm.cluster(d, formula=form,family=binomial,cluster="ufn_primary" )
+      glm.cluster(data=d, formula=form, family=binomial, cluster="ufn_primary")
     })
-    
-    # mod <- lapply(data, function(d){
-    #   lm.cluster(d, formula=form,cluster="ufn_primary" )
-    # })
-    # beep()
 
     cmod <- mitools::MIextract( mod, fun=coef)
     semod <- lapply( mod, FUN=function(mm){
@@ -179,7 +174,7 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
     } )
     
     modpool <- miceadds::pool_mi( qhat=cmod, se=semod )
-    
+    modpool
   })
   
   for(i in 1:length(model)) { 
