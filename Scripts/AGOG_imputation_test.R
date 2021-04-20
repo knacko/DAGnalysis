@@ -179,10 +179,22 @@ anti_join(df1, df2, by="cec_upn")
 
 m <- 35
 
-AGOG.imputes <- mice(AGOG.formatted, method="cart", m=m, maxit=25, seed=123, 
+AGOG.imputes <- mice(AGOG.formatted, method="cart", m=m, maxit=100, seed=123, 
                    pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
+
+AGOG.imputes.graph <- rename(AGOG.formatted,BMI=body.size)
+AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=50, seed=123, 
+                     pred=quickpred(AGOG.imputes.graph, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
+
+plot(AGOG.imputes.graph,y=c("income","physical.activity","BMI"))
+
+inc <- densityplot(AGOG.imputes.graph, ~income,ylab="")
+phys <- densityplot(AGOG.imputes.graph, ~physical.activity,ylab="")
+BMI <- densityplot(AGOG.imputes.graph, ~BMI,ylab="")
+grid.arrange(inc,phys,BMI, ncol=3,left="Density")
+
 
 #AGOG.dataset$vice.cannabis %<>% as.logical() #Not sure why this is necessary
 
