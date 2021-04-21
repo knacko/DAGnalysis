@@ -3,13 +3,16 @@
 
 m <- 35
 
+impute <- function()
+
+
 AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=20, seed=123, 
                      pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
 AGOG.imputes.graph <- rename(AGOG.formatted,BMI=body.size)
-AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=50, seed=123, 
+AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=5, seed=123, 
                            pred=quickpred(AGOG.imputes.graph, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 plot(AGOG.imputes.graph,y=c("income","physical.activity","BMI"))
@@ -26,6 +29,121 @@ summary(AGOG.dataset)
 summary(AGOG.formatted)
 
 md.pattern(AGOG.dataset,rotate.names=TRUE)
+
+
+
+#' Imputes the missing elements of a matrix
+#' @details 
+#' @param data The data to impute
+#' @param m The number of datasets to produce. Should use > fraction of incomplete cases * 100 
+#' @param maxit Iterations for each dataset. Should use at least 20 to help determine convergence
+#' @param seed Seed value for the randomization
+#' @param exclude List of columns names to exclude from the imputation
+#' @param complete Returns list of complete data.frames instead of imputation object
+#' @return The imputed data
+#' @examples
+#' @export
+impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, complete = FALSE, 
+                        show_stats = FALSE) {
+  
+  imputed <- mice(data, m=m, maxit=maxit, seed=seed, 
+                  pred=quickpred(data, method="spearman",exclude = exclude))
+  
+  if (complete = TRUE) {
+    imputed <- lapply(1:m, function(i) complete(imputed),i)
+  }
+  
+  if (show_stats) {
+    message("Before imputation:")
+    summary(data)
+    message("\nAfter imputation:")
+    summary(imputed)
+    md.pattern(AGOG.dataset,rotate.names=TRUE)
+  }
+  
+  return(imputed)
+  
+}
+
+#' Plots the convergence data
+#' @details 
+#' @param data The data to impute (from impute_data)
+#' @param cols Which columns to show. Default is all columns that were imputed.
+#' @param min_imp Cut-off of minimum number of imputations
+#' @param m The number of datasets to show on the graph. Recommended value < 10 for visibility 
+#' @param maxit Iterations for each dataset. Recommended value > 20 
+#' @return The imputed data
+#' @examples
+#' @export
+check_convergence <- function(data, cols = NULL, min_imp = 0, m = 10, maxit = 20) {
+  
+  if (m > length(data)) {
+    m <- length(data)
+    warning("m exceeds the number of imputed data sets. Defaulting to ",m)
+  }
+  
+  if (maxit > length(data$imp)) {
+    maxit <- length(data$imp) 
+    warning("maxit exceeds the number of iterations in data. Defaulting to ",maxit)
+  }
+  
+  if (is.null(cols)) {
+    cols <- names(which(lapply(data$imp,nrow) != 0))
+  } 
+  
+  cols <- cols && names(which(lapply(data$imp,nrow) >= min_imp)) #Get common elements
+  
+  
+  plot(data,y=cols)
+}
+
+
+
+
+
+
+#' Imputes the missing elements of a matrix
+#' @details 
+#' @param data The data to impute (from impute_data)
+#' @param cols Which columns to show. Default is all columns that were imputed.
+#' @param m The number of datasets to display. Recommend < 10 for clarity
+#' @return plot showing distribution of the original and imputed data
+#' @examples
+#' @export
+check_distribution <- function(data, cols, m = 10, ...) {
+  
+  #Same functions as above except for maxit
+  
+  plots <- cols %>% densityplot(data,~.,ylab="") 
+  grid.arrange(plots, ...,left="Density")
+  
+}
+
+
+
+
+
+
+
+AGOG.imputes.graph <- rename(AGOG.formatted,BMI=body.size)
+AGOG.imputes.graph <- mice(AGOG.imputes.graph, m=5, maxit=50, seed=123, 
+                           pred=quickpred(AGOG.imputes.graph, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
+
+plot(AGOG.imputes.graph,y=c("income","physical.activity","BMI"))
+
+
+#AGOG.dataset$vice.cannabis %<>% as.logical() #Not sure why this is necessary
+
+summary(AGOG.dataset)
+summary(AGOG.formatted)
+
+
+
+
+
+
+
+
 
 ### Imputing Physical activity ################
 
