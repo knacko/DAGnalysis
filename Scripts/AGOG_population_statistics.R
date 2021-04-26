@@ -13,7 +13,6 @@ AGOG.stats %<>% add.casecontrol.mean.sd("age","Age (years), mean (SD)")
 ### Gender
 AGOG.stats %<>% add.casecontrol.n.perc("gender","Men, n (%)",1)
 
-
 ### Ethnicity
 AGOG.stats %<>% add.casecontrol.n.perc("ethnicity","White European origin, n (%)",TRUE)
 
@@ -135,8 +134,6 @@ add.casecontrol.n.perc <- function(df,col,str,val,per.dig=1) {
   return(add.row(df,str,case,control))
   
 }
-
-
 
 format.n.perc <- function(col,val,perc.dig=1) {
   

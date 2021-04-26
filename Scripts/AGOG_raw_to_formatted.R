@@ -84,23 +84,30 @@ AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols)
 
 ### Get data into the proper formats for imputation/calculation
 
-factors <- c("vice.alcohol","education","gender","income","vice.cigarette","physical.activity","body.size","vice.cannabis")
+unord.factors <- c("state")
+ord.factors <- c("vice.alcohol","education","gender","income","vice.cigarette","physical.activity","body.size","vice.cannabis")
 numerics <- c("vice.caffeine","mental.activity","age")
-booleans <- c("allergies","cancer.other","cancer.glioma","drug.aspirin","drug.nsaid","ethnicity",
+booleans <- c("allergies","cancer.other","drug.aspirin","drug.nsaid","ethnicity",
               "drug.statin","drug.steroid","migraines","noncancer.disease")
+binarys <- c("cancer.glioma")
 
-AGOG.formatted$state <- factor(AGOG.formatted$state)
+#AGOG.formatted %<>% mutate_at(unord.factors, funs(as.numeric(as.character(.))))
+AGOG.formatted %<>% mutate_at(unord.factors, factor)
 
-AGOG.formatted %<>% mutate_at(factors, funs(as.numeric(as.character(.))))
-AGOG.formatted %<>% mutate_at(factors, factor)
+AGOG.formatted %<>% mutate_at(ord.factors, funs(as.numeric(as.character(.))))
+AGOG.formatted %<>% mutate_at(ord.factors, factor)
+AGOG.formatted %<>% mutate_at(ord.factors, ordered)
 
 AGOG.formatted %<>% mutate_at(numerics, funs(as.numeric(as.character(.))))
 
 AGOG.formatted %<>% mutate_at(booleans, factor)
-AGOG.formatted %<>% mutate_at(booleans, funs(recode(.,"Yes" = TRUE, "No" = FALSE, .default = NA)))
+#AGOG.formatted %<>% mutate_at(booleans, funs(recode(.,"Yes" = TRUE, "No" = FALSE, .default = NA)))
 #AGOG.formatted %<>% mutate_at(booleans, funs(as.logical(as.integer(.) - 1L)))
 
-rm(booleans,factors,goodcols,numerics)
+AGOG.formatted %<>% mutate_at(binarys, factor)
+AGOG.formatted %<>% mutate_at(binarys, funs(recode(.,"Yes" = TRUE, "No" = FALSE, .default = NA)))
+
+rm(booleans,ord.factors,goodcols,numerics)
 
 md.pattern(AGOG.formatted,rotate.names=TRUE)
 

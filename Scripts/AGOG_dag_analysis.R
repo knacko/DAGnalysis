@@ -154,6 +154,7 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
 
     form <- as.formula(paste("cancer.glioma ~",i,confounders.s))
     
+    wgt__ <- NULL
     mod <- lapply(data, function(d){
       glm.cluster(data=d, formula=form, family=binomial, cluster="ufn_primary")
     })

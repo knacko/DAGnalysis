@@ -31,7 +31,6 @@ impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, co
   }
   
   return(imputed)
-  
 }
 
 #' Plots the convergence data

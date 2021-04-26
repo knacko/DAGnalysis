@@ -1,12 +1,9 @@
 
 ### Impute master AGOG data (all in proper data types and containing only DAG nodes)
 
-m <- 35
+m <- 5
 
-impute <- function()
-
-
-AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=20, seed=123, 
+AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=5, seed=123, 
                      pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
