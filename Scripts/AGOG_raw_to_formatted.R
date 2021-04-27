@@ -85,9 +85,9 @@ AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols)
 ### Get data into the proper formats for imputation/calculation
 
 unord.factors <- c("state")
-ord.factors <- c("vice.alcohol","education","gender","income","vice.cigarette","physical.activity","body.size","vice.cannabis")
+ord.factors <- c("vice.alcohol","education","income","vice.cigarette","physical.activity","body.size","vice.cannabis")
 numerics <- c("vice.caffeine","mental.activity","age")
-booleans <- c("allergies","cancer.other","drug.aspirin","drug.nsaid","ethnicity",
+booleans <- c("allergies","cancer.other","drug.aspirin","drug.nsaid","ethnicity","gender",
               "drug.statin","drug.steroid","migraines","noncancer.disease")
 binarys <- c("cancer.glioma")
 
@@ -96,7 +96,7 @@ AGOG.formatted %<>% mutate_at(unord.factors, factor)
 
 AGOG.formatted %<>% mutate_at(ord.factors, funs(as.numeric(as.character(.))))
 AGOG.formatted %<>% mutate_at(ord.factors, factor)
-AGOG.formatted %<>% mutate_at(ord.factors, ordered)
+#AGOG.formatted %<>% mutate_at(ord.factors, ordered)
 
 AGOG.formatted %<>% mutate_at(numerics, funs(as.numeric(as.character(.))))
 
