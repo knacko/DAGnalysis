@@ -1,59 +1,14 @@
-tidy_dagitty(dag)
-
-exposure <- exp <- "alcohol.usage"
-outcome <- out <- "cancer.glioma"
-df <- AGOGdata
-
-DAG <- dagitty(paste("dag {", DAGdefault, "}", sep = ""))
-
-fit <- calculate(DAG,df,exp,out)
-
-summary(fit[[1]])
-tidy(fit[[1]], exponentiate =  TRUE, conf.int = TRUE)%>% 
-  mutate_if(is.numeric, round, digits =4)
-
-conf <- unlist(adjustmentSets(DAG, "drug.statin", "cancer.glioma", effect="total" ), use.names=FALSE)
-
-calculate <- function (dag, df, exposure, outcome) {
-  
-  adjSets <- adjustmentSets(dag, exposure, outcome, effect="total" )
-  
-  fitSets <- c()
-  
-  #adjSet <- adjSets[1]
-  
-  for (adjSet in adjSets) {
-    
-    adjSet %<>% unlist(use.names=FALSE)
-    
-    confounding <- if (length(adjSet) == 0) "" else paste(" +",paste(adjSet,collapse=" + "))
-    
-    formula <- paste(paste(outcome,"~",exposure,sep = " "),confounding,sep="")
-    
-    print(formula)
-    
-    formula %<>% as.formula()
-    
-    fit <- glm(formula, data = df, family = binomial(link=logit))
-    
-    fitSets %<>% append(list(fit))
-    
-  }
-  
-  return(fitSets)
-}
-
 ### Model (All) ###################################
-
-tryCatch ({
+# 
+# tryCatch ({
+#   
+   err = FALSE
   
-  err = FALSE
-  
-  #DAG <- read_file()
+  DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
   
   Model.crude <- AGOG.model(AGOG.dataset)
-  Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
-  Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("gender","age","ethnicity","state"))
+  Model.adjusted <- AGOGmo.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+  Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
   Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
   
   ## Create a blank workbook
@@ -82,13 +37,13 @@ tryCatch ({
   
   path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
   
-  },
-  error=function(cond) {
-    message(cond)
-    err <- TRUE
-})
-  
-if(!err) {  
+#   },
+#   error=function(cond) {
+#     message(cond)
+#     err <- TRUE
+# })
+
+
   dir.create(path)
   saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
   save.image(file=paste0(path,date,"_R_image.rda"))
@@ -97,7 +52,10 @@ if(!err) {
   write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
   
   rm(wb,path,date)
-}
+
+
+
+### RUN EVERYTHING BELOW THIS LINE ############################################
 
 # Extract the p-value from the summary(lm)
 summary.return.pval <- function( object, ... )
@@ -113,15 +71,15 @@ summary.return.pval <- function( object, ... )
 ### Model (DAG) ###################################
 
 AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
-  
+
   if(is.null(exposure)) exposure <- names(data[[1]])
-  exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","cancer.glioma",confounders)]
+  exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","Cancer.glioma",confounders)]
   
   exposure.variables <- data.frame(Variable=character(), OR=numeric(), CI2.5=numeric(), CI97.5=numeric(), "P.value"=numeric(),"Sigificance"=character(),"Confounders"=character())
   
   for(i in 1:length(exposure)) { 
-    
-    adjSets <- adjustmentSets(DAG, exposure[i], "cancer.glioma", effect="total" )
+
+    adjSets <- adjustmentSets(DAG, exposure[i], "Cancer.glioma", effect="total" )
     
     for(j in 1:length(adjSets)) { 
       
@@ -141,18 +99,18 @@ AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
 ### Model (Crude and Adjusted) ##################################
 
 AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
-  
+
   if(is.null(exposure)) exposure <- names(data[[1]])
   
-  exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","cancer.glioma",confounders)]
+  exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","Cancer.glioma",confounders)]
   
   exposure.variables <- data.frame(Variable=character(), OR=numeric(), CI2.5=numeric(), CI97.5=numeric(), "P.value"=numeric(),"Sigificance"=character(),"Confounders"=character())
   
   confounders.s <- if (length(confounders) == 0) "" else paste("+",paste(confounders,collapse=" + "))
 
-  model <- lapply(exposure, function(i) {
-
-    form <- as.formula(paste("cancer.glioma ~",i,confounders.s))
+  model <- lapply(exposure, function(exp) {
+    
+    form <- as.formula(paste("Cancer.glioma ~",exp,confounders.s))
     
     wgt__ <- NULL
     mod <- lapply(data, function(d){
@@ -165,15 +123,17 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
       smm$coefficients[,"Std. Error"]
     } )
     
-    modpool <- miceadds::pool_mi( qhat=cmod, se=semod )
+    modpool <- miceadds::pool_mi( qhat=cmod, se=semod)
     modpool
   })
   
   for(i in 1:length(model)) { 
-    
+
     glm <- model[[i]]
     
     capture.var <- 2:max(2,(nlevels(data[[1]][,exposure[i]])))
+    
+   # capture.var <- 2:max(2,(length(factor(data[[1]][,exposure[i]]))))
     
     exposure.variable <- cbind(OR = exp(coef(glm)), exp(confint(glm)),
                                "P.value" = summary(glm)$p)[capture.var,]
@@ -193,9 +153,78 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
   
 }
 
-#### Old stuff
 
-logistic.display(glm1)
-
-
+#' Imports a DAG from the Dagitty R Shiny app
+#' @details The Dagitty app contains position information for each node in the graph. This must be removed before the R Dagitty object can be created.
+#' @param filepath character; the file location containing the DAG 
+#' @return dagitty; The object representing the DAG
+import_dag <- function(filepath) {
+  
+  DAG = readLines(filepath)
+  DAG = DAG[sapply(DAG,function(line) !grepl("^bb", line, fixed = TRUE))]
+  DAG = paste(DAG,collapse="\n")
+  
+  
+  return(dagitty(DAG))
+}  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+#### OLD STUFF ##############################################3
+# tidy_dagitty(dag)
+# 
+# exposure <- exp <- "alcohol.usage"
+# outcome <- out <- "cancer.glioma"
+# df <- AGOGdata
+# 
+# DAG <- dagitty(paste("dag {", DAGdefault, "}", sep = ""))
+# 
+# fit <- calculate(DAG,df,exp,out)
+# 
+# summary(fit[[1]])
+# tidy(fit[[1]], exponentiate =  TRUE, conf.int = TRUE)%>% 
+#   mutate_if(is.numeric, round, digits =4)
+# 
+# conf <- unlist(adjustmentSets(DAG, "drug.statin", "cancer.glioma", effect="total" ), use.names=FALSE)
+# 
+# calculate <- function (dag, df, exposure, outcome) {
+#   
+#   adjSets <- adjustmentSets(dag, exposure, outcome, effect="total" )
+#   
+#   fitSets <- c()
+#   
+#   #adjSet <- adjSets[1]
+#   
+#   for (adjSet in adjSets) {
+#     
+#     adjSet %<>% unlist(use.names=FALSE)
+#     
+#     confounding <- if (length(adjSet) == 0) "" else paste(" +",paste(adjSet,collapse=" + "))
+#     
+#     formula <- paste(paste(outcome,"~",exposure,sep = " "),confounding,sep="")
+#     
+#     print(formula)
+#     
+#     formula %<>% as.formula()
+#     
+#     fit <- glm(formula, data = df, family = binomial(link=logit))
+#     
+#     fitSets %<>% append(list(fit))
+#     
+#   }
+#   
+#   return(fitSets)
+# }
 

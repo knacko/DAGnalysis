@@ -1,39 +1,3 @@
-### Start up stuff #############################################################################
-
-invalids <- data.frame(val=c(".a",".m",".r",".u",".w",".x",".y"),
-                       text=c("At least one","Invalid response given","Refused to answer","Don't know","Not asked", "Not answered","Not applicable"))
-
-parseInvalids <- function (d) {
-  return(parseData(d, invalids))
-}
-
-parseData <- function(d, lookup) {
-  
-  if (is.null(ncol(d))) return(parseCol(d,lookup))
-  
-  for (col in 1:ncol(d)) {
-    
-    d[,col] %<>% parseCol(lookup)
-  }
-  
-  return(d)
-}
-
-parseCol <- function(col,lookup) {
-  
-  for(id in 1:nrow(lookup)){
-    col[which(col %in% as.character(lookup$val[id]))] <- as.character(lookup$text[id])
-  }
-  return(col)
-}
-
-### Export data frame to file ####################
-write.xlsx(AGOGdata,'.//_AGOGdata.xlsx')
-
-### Import data frame from file ##################
-AGOG.data <- read.xlsx('.//_2020-12-30_16_28_AGOG_raw.xlsx', colNames = TRUE,)
-
-### (A) Load all data from shortcuts #############################################################################
 
 setwd("D:\\Documents\\School\\Internships\\CBDRH\\Data\\Data from CBDRH\\Shortcuts")
 
@@ -76,7 +40,7 @@ goodcols <- DAGvars
 goodcols <- c("Age", "Gender","Education", "Income","BMI", "Ethnicity",
               "Physical.activity","Sedentary.activity","Alcohol", "Cigarettes",
               "Cannabis", "Caffeine",
-              "Aspirin", "NSAIDs", "Steroids", "Statins", 
+              "NSAIDs", "Steroids", "Statins", 
               "Allergies", "Migraines", "Cellphone",
               "Cancer.glioma", "Cancer.other", "Disease.other","State")
 
@@ -84,11 +48,10 @@ AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols)
 AGOG.formatted[apply(AGOG.formatted,c(1,2),function(x) grepl( "^\\.", x))] <- NA
 
 ### Get data into the proper formats for imputation/calculation
-
 unord.factors <- c("State","Ethnicity")
 ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Cannabis")
 numerics <- c("Caffeine","Sedentary.activity","Age")
-booleans <- c("Allergies","Cancer.other","Aspirin","NSAIDs","Gender",
+booleans <- c("Allergies","Cancer.other","NSAIDs","Gender",
               "Statins","Steroids","Migraines","Disease.other","Cellphone")
 binarys <- c("Cancer.glioma")
 
@@ -110,20 +73,63 @@ AGOG.formatted %<>% mutate_at(binarys, funs(recode(.,"Yes" = TRUE, "No" = FALSE,
 
 rm(booleans,ord.factors,goodcols,numerics)
 
-invisible(md.pattern(AGOG.formatted,rotate.names=TRUE))
+m <- 10
 
-### Count all .x
+AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=10, seed=123, 
+                     pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
-count.char <- '.x'
-count.char <- NA
+AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
-row_count(AGOG.formatted,count=count.char,append=FALSE)             ### By row
-length(which(row_count(AGOG.formatted,count=count.char,append=FALSE)>0)) ### Rows missing values
-sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE)))             ### By col
-colSums(row_count(AGOG.formatted,count=count.char,append=FALSE))    ### Entire DF
 
-### Get percentage of .x
+DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
 
-head(sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE))[,1],decreasing = TRUE)/nrow(AGOG.formatted)*100)
+Model.crude <- AGOG.model(AGOG.dataset)
+Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
+Model.DAG[,1:6]
+
+## Create a blank workbook
+wb <- createWorkbook()
+
+addWorksheet(wb, "Crude")
+addWorksheet(wb, "Adjusted")
+addWorksheet(wb, "DAG")
+
+addWorksheet(wb, "Significant Crude")
+addWorksheet(wb, "Significant Adjusted")
+addWorksheet(wb, "Significant DAG")
+
+writeData(wb, "Crude", Model.crude)
+writeData(wb, "Adjusted", Model.adjusted)
+writeData(wb, "DAG", Model.DAG)
+
+writeData(wb, "Significant Crude", filter(Model.crude,Sigificance != " "))
+writeData(wb, "Significant Adjusted", filter(Model.adjusted,Sigificance != " "))
+writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
+
+## Save workbook to working directory
+date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+
+identifier <- " - Cannabis"
+
+path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
+
+#   },
+#   error=function(cond) {
+#     message(cond)
+#     err <- TRUE
+# })
+
+
+dir.create(path)
+saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
+save.image(file=paste0(path,date,"_R_image.rda"))
+write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
+write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
+write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
+
+rm(wb,path,date)
+
 
 

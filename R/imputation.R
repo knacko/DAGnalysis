@@ -27,7 +27,7 @@ impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, co
     summary(data)
     message("\nAfter imputation:")
     summary(imputed)
-    md.pattern(AGOG.dataset,rotate.names=TRUE)
+    md.pattern(imputed,rotate.names=TRUE)
   }
   
   return(imputed)
