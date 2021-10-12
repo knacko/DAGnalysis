@@ -116,11 +116,24 @@ invisible(md.pattern(AGOG.formatted,rotate.names=TRUE))
 
 count.char <- '.x'
 count.char <- NA
+count.char = c('.x',NA)
 
 row_count(AGOG.formatted,count=count.char,append=FALSE)             ### By row
 length(which(row_count(AGOG.formatted,count=count.char,append=FALSE)>0)) ### Rows missing values
-sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE)))             ### By col
+
 colSums(row_count(AGOG.formatted,count=count.char,append=FALSE))    ### Entire DF
+
+
+### Getting missing values table
+count.char <- NA
+tbl <- sort(col_count(AGOG.formatted,count=count.char,append=FALSE))             ### By col
+tbl <- t(tbl)
+tbl <- cbind.data.frame("Risk Factor" = row.names(tbl), "N" = tbl[,1])
+tbl <- apply(tbl, 2, rev)
+
+clipr::write_clip(tbl)
+
+
 
 ### Get percentage of .x
 

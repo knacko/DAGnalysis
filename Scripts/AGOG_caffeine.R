@@ -55,20 +55,17 @@ rm(f,files,data,path)
 
 goodcols <- DAGvars
 
-### Get data into the proper formats for imputation/calculation
 unord.factors <- c("State","Ethnicity")
-ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Sedentary.activity","Caffeine")
+#ord.factors <- c("cola_mg3","coffee_inst_mg3","coffee_mg3","tea_mg3","energy_mg3")
+ord.factors <- c("cola","coffee_inst","coffee","tea","energy")
 numerics <- c("Age")
-booleans <- c("Allergies","Cancer.other","NSAIDs","Gender","Aspirin",
-              "Statins","Steroids","Migraines","Disease.other","Cellphone","Cannabis")
+booleans <- c("Gender")
 binarys <- c("Cancer.glioma")
 
 goodcols <- c(unord.factors,ord.factors,numerics,booleans,binarys)
 
 AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols))
 AGOG.formatted[apply(AGOG.formatted,c(1,2),function(x) grepl( "^\\.", x))] <- NA
-
-
 
 #AGOG.formatted %<>% mutate_at(unord.factors, funs(as.numeric(as.character(.))))
 AGOG.formatted %<>% mutate_at(unord.factors, factor)
@@ -91,7 +88,7 @@ rm(booleans,ord.factors,goodcols,numerics)
 #AGOG.formatted <- filter(AGOG.formatted, !is.na(Income))
 #AGOG.formatted <- na.omit(AGOG.formatted)
 
-m <- 30
+m <- 10
 
 AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=10, seed=123, 
                      pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
@@ -103,6 +100,13 @@ DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
 
 Model.crude <- AGOG.model(AGOG.dataset)
 Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+Model.adjusted
+
+
+
+
+
+
 Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
 Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
 Model.DAG[,1:6]
@@ -192,7 +196,7 @@ writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
 ## Save workbook to working directory
 date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
-identifier <- "caff dosedep"
+identifier <- ""
 
 path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
 

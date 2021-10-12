@@ -139,9 +139,9 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
                                "P.value" = summary(glm)$p)[capture.var,]
     
     if (length(capture.var)==1) exposure.variable %<>% as.list()
-    
+
     exposure.variable <- cbind(data.frame("Variable"=names(coef(glm))[capture.var]),data.frame(exposure.variable))
-    exposure.variable %<>% rename("CI2.5" = "X2.5..", "CI97.5" = "X97.5..")
+    exposure.variable %<>% dplyr::rename("CI2.5" = "X2.5..", "CI97.5" = "X97.5..")
     exposure.variable$Sigificance <- stars.pval(exposure.variable$P.value)
     exposure.variable$Confounders <- paste(confounders, collapse=", ")
     
