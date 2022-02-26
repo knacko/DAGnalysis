@@ -18,7 +18,7 @@ impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, co
   imputed <- mice(data, m=m, maxit=maxit, seed=seed, 
                   pred=quickpred(data, method="spearman",exclude = exclude))
   
-  if (complete = TRUE) {
+  if (complete == TRUE) {
     imputed <- lapply(1:m, function(i) complete(imputed),i)
   }
   
@@ -37,7 +37,7 @@ impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, co
 #' @details 
 #' @param data The data to impute (from impute_data)
 #' @param cols Which columns to show. Default is all columns that were imputed.
-#' @param min_imp Cut-off of minimum number of 
+#' @param min_imp Cut-off of minimum number of imputed values. 
 #' @param m The number of datasets to show on the graph. Recommended value < 10 for visibility 
 #' @param maxit Iterations for each dataset. Recommended value > 20 imputations
 #' @return The imputed data
@@ -76,8 +76,18 @@ check_convergence <- function(data, cols = NULL, min_imp = 0, m = 10, maxit = 20
 check_distribution <- function(data, cols, m = 10, ...) {
   
   #Same boilerplate as above except for maxit
+  if (m > length(data)) {
+    m <- length(data)
+    warning("m exceeds the number of imputed data sets. Defaulting to ",m)
+  }
   
-  plots <- cols %>% densityplot(data,~.,ylab="") 
-  grid.arrange(plots, ...,left="Density")
+  if (is.null(cols)) {
+    cols <- names(which(lapply(data$imp,nrow) != 0))
+  }
+  
+  cols <- cols && names(which(lapply(data$imp,nrow) >= min_imp)) #Get common elements
+  
+  plots <- cols %>% densityplot(data,~.,ylab="")
+  gridExtra::grid.arrange(plots,..., left="Density")
   
 }
