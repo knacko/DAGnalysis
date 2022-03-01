@@ -56,14 +56,15 @@ rm(f,files,data,path)
 goodcols <- DAGvars
 
 ### Get data into the proper formats for imputation/calculation
-#unord.factors <- c("State","Ethnicity")
+unord.factors <- c("State","Ethnicity")
 #ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Sedentary.activity","Caffeine")
 numerics <- c("Age")
-booleans <- c("Gender","Bladder","Bone","Bowel","Brain","Breast","Kidney","Leukaemia","Lung","Oesophageal","Prostate","Melanoma","NonMelanoma","Thyroid","Other")
+booleans <- c("Gender","Cancer.other","Bladder","Bone","Bowel","Brain","Breast","Kidney",
+              "Leukaemia","Lung","Oesophageal","Prostate","Melanoma","NonMelanoma","Thyroid","Other")
 #booleans <- c("Gender","Bladder","Bone","Bowel","Brain","Breast","GallBladder","Kidney","Leukaemia","Liver","Lung","MultipleMyeloma","Oesophageal","Pancreas","Prostate","Melanoma","NonMelanoma","SmallIntestine","Stomach","Thyroid","Other")
 binarys <- c("Cancer.glioma")
 
-goodcols <- c(numerics,booleans,binarys)
+goodcols <- c(numerics,booleans,binarys,unord.factors)
 
 AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols))
 AGOG.formatted[apply(AGOG.formatted,c(1,2),function(x) grepl( "^\\.", x))] <- NA
@@ -102,10 +103,19 @@ AGOG.dataset <- list(AGOG.formatted)
 DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
 
 Model.crude <- AGOG.model(AGOG.dataset)
-Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("Gender","Age"))
+Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+Model.adjusted
 #Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
 #Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
 #Model.DAG[,1:6]
+
+cancers <- c("Cancer.other","Bladder","Bone","Bowel","Brain","Breast","Kidney","Leukaemia","Lung","Oesophageal","Prostate","Melanoma","NonMelanoma","Thyroid","Other")
+summary(subset(AGOG.formatted, Cancer.glioma == TRUE)[cancers])
+summary(subset(AGOG.formatted, Cancer.glioma == FALSE)[cancers])
+
+
+
+
 
 #### Generate OR graphic
 

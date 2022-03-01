@@ -90,7 +90,7 @@ rm(booleans,ord.factors,goodcols,numerics)
 #AGOG.formatted <- na.omit(AGOG.formatted)
 
 if (any(is.na(AGOG.formatted))) {
-  m <- 30
+  m <- 5
   AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=10, seed=123,
                        pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'Cancer.glioma','ufn_primary')))
   AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
