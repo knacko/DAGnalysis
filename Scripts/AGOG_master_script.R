@@ -17,7 +17,7 @@ options(scipen=2)
 
 
 
-setwd("D:\\Documents\\School\\Internships\\CBDRH\\Data\\Data from CBDRH\\Shortcuts")
+setwd("D:\\Home\\School\\Internships\\CBDRH\\Data\\Data from CBDRH\\Shortcuts")
 
 files <- list.files (getwd())
 
@@ -57,10 +57,9 @@ goodcols <- DAGvars
 
 ### Get data into the proper formats for imputation/calculation
 unord.factors <- c("State","Ethnicity")
-ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Sedentary.activity","Caffeine")
+ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Sedentary.activity","Caffeine","Cellphone")
 numerics <- c("Age")
-booleans <- c("Allergies","Cancer.other","NSAIDs","Gender","Aspirin",
-              "Statins","Steroids","Migraines","Disease.other","Cellphone","Cannabis")
+booleans <- c("Allergies","Cancer.other","NSAIDs","Gender","Aspirin","Statins","Steroids","Migraines","Disease.other","Cannabis")
 binarys <- c("Cancer.glioma")
 
 goodcols <- c(unord.factors,ord.factors,numerics,booleans,binarys)
@@ -91,28 +90,29 @@ rm(booleans,ord.factors,goodcols,numerics)
 #AGOG.formatted <- filter(AGOG.formatted, !is.na(Income))
 #AGOG.formatted <- na.omit(AGOG.formatted)
 
-m <- 30
+m <- 10
+maxit <- 5
 
-AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=10, seed=123, 
+AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=maxit, seed=123, 
                      pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
 
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
 
-DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
+DAG <- import_dag("D:/Home/School/Internships/CBDRH/DAGs/currentDag.txt")
 
 Model.crude <- AGOG.model(AGOG.dataset)
 Model.adjusted <- AGOG.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
 Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
-Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
+Model.DAG$Confounders <- stringr::str_to_title(Model.DAG$Confounders, locale = "en")
 Model.DAG[,1:6]
 
 #### Generate OR graphic
 
 Model.sig <- as.data.frame(Model.DAG %>% group_by(Variable) %>% top_n(1, OR))
-Model.sig <- filter(Model.sig,Sigificance != " ")
+#Model.sig <- filter(Model.sig,Sigificance != " ")
 
-dict <- read.xlsx("D:/Documents/School/Internships/CBDRH/Report/AGOG_master_data_dict.xlsx", colNames=TRUE)
+dict <- read.xlsx("D:/Home/School/Internships/CBDRH/Report/AGOG_master_data_dict.xlsx", colNames=TRUE)
 
 cats <- sprintf("(%s)", paste(unique(dict$Category), collapse = "|"))
 
@@ -120,30 +120,58 @@ dats <- gsub(cats, "|\\1|", Model.sig[,1]) %>%
   strsplit(., "|", fixed = TRUE) %>%
   do.call(rbind, .)
 dats <- as.data.frame(dats[,2:3])
-colnames(dats) <- c("Category","Variable")
+colnames(dats) <- c("Cat","Var")
 
-dats <- cbind(dats,Cat_label = mapvalues(dats[,1], from=unique(dict$Category), to=unique(dict$Category_label)))
-dats <- cbind(dats,Val_label = mapvalues(paste0(dats[,1],dats[,2]), from=paste0(dict$Category,dict$Variable), to=dict$Variable_label))
+dats <- cbind(dats,Cat_label = plyr::mapvalues(dats$Cat, from=unique(dict$Category), to=unique(dict$Category_label)))
+dats <- cbind(dats,Val_label = plyr::mapvalues(paste0(dats$Cat,dats$Var), from=paste0(dict$Category,dict$Variable), to=dict$Variable_label))
 
-#dats$Cat_label[duplicated(dats$Cat_label)] <- NA
+dats$Cat_label[duplicated(dats$Cat_label)] <- NA
 
 #dats$Val_label[which(dats$Val_label=="Caffeine")] <- NA
 dats$Val_label[which(dats$Val_label==" ")] <- NA
 
-#dats %<>% unite(., col = "Label",  Cat_label, Val_label, na.rm=TRUE, sep = "; ")
+dats %<>% unite(., col = "Label",  Cat_label, Val_label, remove = FALSE, na.rm=TRUE, sep = "; ")
 
 #Model.sig$Variable <- dats$Val_label
-Model.sig$Category <- dats$Cat_label
-Model.sig$Variable = factor(Model.sig$Variable, levels = Model.sig$Variable)
+# Model.sig$Category <- dats$Cat_label
+# Model.sig$Variable = factor(Model.sig$Variable, levels = Model.sig$Variable)
+
+#---- Generate the plot ------------------------------------------------------------------------------------------------
+
+plotDat <- cbind(Model.sig,dats)
+
+order <- c("Education","Income","BMI","Physical.activity","Sedentary.activity","Cellphone","Alcohol","Cigarettes","Cannabis","Caffeine","Aspirin","NSAIDs","Steroids","Statins","Allergies","Migraines","Disease.other","Cancer.other")
+
+plotDat <- plotDat[order(factor(plotDat$Cat, levels = order)),]
+
+header.idx <- which(duplicated(plotDat$Cat)) - 1
+header.idx <- header.idx[data.table::rowid(collapse::seqid(header.idx)) %% 2 == 1]
+header.idx <- sort(c(header.idx,header.idx))
+header.idx <- header.idx + seq(header.idx) - 1
+
+#header.idx <- sort(append(header.idx,which(plotDat$Cat == "Aspirin")))
+
+insertRow <- function(df, idx) {
+  df[seq(idx+1,nrow(df)+1),] <- df[seq(idx,nrow(df)),]
+  df[idx,] <- NA
+  df
+}
+
+for (idx in header.idx) {
+  plotDat <- insertRow(plotDat,idx)
+}
+
+plotDat <- insertRow(plotDat, which(plotDat$Cat == "Aspirin"))
+plotDat <- insertRow(plotDat, which(plotDat$Cat == "Cannabis"))
 
 CairoWin(width=4, height = 4)
-forest <- ggplot(data=Model.sig, aes(y=Variable, x=OR, xmin=CI2.5, xmax=CI97.5))+ 
+forest <- ggplot(data=plotDat, aes(y=Label, x=OR, xmin=CI2.5, xmax=CI97.5))+ 
   geom_point(size=3,shape=15)+ 
   geom_errorbarh(height=.5,size=1)+
   geom_vline(xintercept=1, color="black", linetype="dashed", alpha=.5)+
   
   scale_x_continuous(name="Odds Ratio",limits=c(0,4), breaks = c(0:3))+
-  scale_y_discrete(limits = rev(levels(factor(Model.sig$Variable))))+
+  scale_y_discrete(limits = rev(plotDat$Label))+#levels(factor(Model.sig$Variable))))+
   
   theme_minimal()+
   theme(text=element_text(family="Times",size=18, color="black"))+
