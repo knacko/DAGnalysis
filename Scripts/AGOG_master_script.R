@@ -1,4 +1,4 @@
-
+#---- Setup the env ----------------------------------------------------------------------------------------------------
 setwd("C:\\Users\\geekb\\Documents\\School\\Internships\\CBDRH\\Data\\Data from CBDRH")
 list.files(getwd())
 getwd()
@@ -13,10 +13,9 @@ lapply(list.of.packages, require, character.only = TRUE)
 
 options(scipen=2)
 
+source("D:/Home/School/Internships/CBDRH/DAGnalysis/Scripts/AGOG_dag_analysis.R")
 
-
-
-
+#---- Load the data ----------------------------------------------------------------------------------------------------
 setwd("D:\\Home\\School\\Internships\\CBDRH\\Data\\Data from CBDRH\\Shortcuts")
 
 files <- list.files (getwd())
@@ -51,11 +50,8 @@ AGOG.raw <- AGOG.raw[-which(AGOG.raw$eligible == 0),] #Remove invalid
 
 rm(f,files,data,path)
 
-### Remove all useless columns ######################
-
-goodcols <- DAGvars
-
-### Get data into the proper formats for imputation/calculation
+#---- Format data ------------------------------------------------------------------------------------------------------
+# Get data into the proper formats for imputation/calculation
 unord.factors <- c("State","Ethnicity")
 ord.factors <- c("Alcohol","Education","Income","Cigarettes","Physical.activity","BMI","Sedentary.activity","Caffeine","Cellphone")
 numerics <- c("Age")
@@ -66,8 +62,6 @@ goodcols <- c(unord.factors,ord.factors,numerics,booleans,binarys)
 
 AGOG.formatted <- AGOG.raw %>% dplyr::select(c("cec_upn","ufn_primary",goodcols))
 AGOG.formatted[apply(AGOG.formatted,c(1,2),function(x) grepl( "^\\.", x))] <- NA
-
-
 
 #AGOG.formatted %<>% mutate_at(unord.factors, funs(as.numeric(as.character(.))))
 AGOG.formatted %<>% mutate_at(unord.factors, factor)
@@ -90,6 +84,9 @@ rm(booleans,ord.factors,goodcols,numerics)
 #AGOG.formatted <- filter(AGOG.formatted, !is.na(Income))
 #AGOG.formatted <- na.omit(AGOG.formatted)
 
+#---- Impute -----------------------------------------------------------------------------------------------------------
+
+# Should use m = 35 and maxit = 10 for final results, but m = 10 and maxit = 5 seems suitable for rough calculations
 m <- 10
 maxit <- 5
 
@@ -99,6 +96,8 @@ AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=maxit, seed=123,
 AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
 
 
+#---- Model ------------------------------------------------------------------------------------------------------------
+
 DAG <- import_dag("D:/Home/School/Internships/CBDRH/DAGs/currentDag.txt")
 
 Model.crude <- AGOG.model(AGOG.dataset)
@@ -107,7 +106,7 @@ Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Et
 Model.DAG$Confounders <- stringr::str_to_title(Model.DAG$Confounders, locale = "en")
 Model.DAG[,1:6]
 
-#### Generate OR graphic
+#---- Generate plot data -----------------------------------------------------------------------------------------------
 
 Model.sig <- as.data.frame(Model.DAG %>% group_by(Variable) %>% top_n(1, OR))
 #Model.sig <- filter(Model.sig,Sigificance != " ")
@@ -198,6 +197,8 @@ forest
 #   theme(text=element_text(size=16,  family="sans"))
 # forest
 
+#---- Save -------------------------------------------------------------------------------------------------------------
+
 ## Create a blank workbook
 wb <- createWorkbook()
 
@@ -220,9 +221,9 @@ writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
 ## Save workbook to working directory
 date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
-identifier <- "caff dosedep"
+identifier <- ""
 
-path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
+path <- paste0("D:/Home/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
 
 #   },
 #   error=function(cond) {

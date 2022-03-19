@@ -2,57 +2,57 @@
 # 
 # tryCatch ({
 #   
-   err = FALSE
-  
-  DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
-  
-  Model.crude <- AGOG.model(AGOG.dataset)
-  Model.adjusted <- AGOGmo.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
-  Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
-  Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
-  
-  ## Create a blank workbook
-  wb <- createWorkbook()
-  
-  addWorksheet(wb, "Crude")
-  addWorksheet(wb, "Adjusted")
-  addWorksheet(wb, "DAG")
-  
-  addWorksheet(wb, "Significant Crude")
-  addWorksheet(wb, "Significant Adjusted")
-  addWorksheet(wb, "Significant DAG")
-  
-  writeData(wb, "Crude", Model.crude)
-  writeData(wb, "Adjusted", Model.adjusted)
-  writeData(wb, "DAG", Model.DAG)
-  
-  writeData(wb, "Significant Crude", filter(Model.crude,Sigificance != " "))
-  writeData(wb, "Significant Adjusted", filter(Model.adjusted,Sigificance != " "))
-  writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
-  
-  ## Save workbook to working directory
-  date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-  
-  identifier <- ""
-  
-  path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
-  
-#   },
-#   error=function(cond) {
-#     message(cond)
-#     err <- TRUE
-# })
-
-
-  dir.create(path)
-  saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
-  save.image(file=paste0(path,date,"_R_image.rda"))
-  write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
-  write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
-  write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
-  
-  rm(wb,path,date)
-
+#    err = FALSE
+#   
+#   DAG <- import_dag("D:/Documents/School/Internships/CBDRH/DAGs/currentDag.txt")
+#   
+#   Model.crude <- AGOG.model(AGOG.dataset)
+#   Model.adjusted <- AGOGmo.model(AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+#   Model.DAG <- AGOG.model.dags(DAG, AGOG.dataset, confounders=c("Gender","Age","Ethnicity","State"))
+#   Model.DAG$Confounders <- str_to_title(Model.DAG$Confounders, locale = "en")
+#   
+#   ## Create a blank workbook
+#   wb <- createWorkbook()
+#   
+#   addWorksheet(wb, "Crude")
+#   addWorksheet(wb, "Adjusted")
+#   addWorksheet(wb, "DAG")
+#   
+#   addWorksheet(wb, "Significant Crude")
+#   addWorksheet(wb, "Significant Adjusted")
+#   addWorksheet(wb, "Significant DAG")
+#   
+#   writeData(wb, "Crude", Model.crude)
+#   writeData(wb, "Adjusted", Model.adjusted)
+#   writeData(wb, "DAG", Model.DAG)
+#   
+#   writeData(wb, "Significant Crude", filter(Model.crude,Sigificance != " "))
+#   writeData(wb, "Significant Adjusted", filter(Model.adjusted,Sigificance != " "))
+#   writeData(wb, "Significant DAG", filter(Model.DAG,Sigificance != " "))
+#   
+#   ## Save workbook to working directory
+#   date <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+#   
+#   identifier <- ""
+#   
+#   path <- paste0("D:/Documents/School/Internships/CBDRH/Data/Data from CBDRH/Generated/",date,identifier,"/")
+#   
+# #   },
+# #   error=function(cond) {
+# #     message(cond)
+# #     err <- TRUE
+# # })
+# 
+# 
+#   dir.create(path)
+#   saveWorkbook(wb, file = paste0(path,date,"_AGOG_OR.xlsx"), overwrite = TRUE)
+#   save.image(file=paste0(path,date,"_R_image.rda"))
+#   write.xlsx(AGOG.dataset,paste0(path,date,"_AGOG_dataset.xlsx"))
+#   write.xlsx(AGOG.raw,paste0(path,date,"_AGOG_raw.xlsx"))
+#   write(DAG, file = paste0(path,date,"_AGOG_DAG.txt"))
+#   
+#   rm(wb,path,date)
+# 
 
 
 ### RUN EVERYTHING BELOW THIS LINE ############################################

@@ -72,7 +72,7 @@ AGOG.formatted[apply(AGOG.formatted,c(1,2),function(x) grepl( "^\\.", x))] <- NA
 AGOG.formatted %<>% mutate_at(unord.factors, factor)
 
 #AGOG.formatted %<>% mutate_at(ord.factors, funs(as.numeric(as.character(.))))
-#AGOG.formatted %<>% mutate_at(ord.factors, factor)
+#AGOG.formatted %<>% mutate_at(ord.factors, factor)`
 #AGOG.formatted %<>% mutate_at(ord.factors, ordered)
 
 AGOG.formatted %<>% mutate_at(numerics, funs(as.numeric(as.character(.))))
