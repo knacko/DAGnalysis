@@ -1,4 +1,3 @@
-
 ### Impute master AGOG data (all in proper data types and containing only DAG nodes)
 
 m <- 10
@@ -199,7 +198,7 @@ ggpubr::ggarrange(plotlist = plots, ncol=3, nrow=1, common.legend = TRUE, legend
 
 
 
-plot_imputed(df1,df2,type="e")
+plot_imputed(,AGOG.formatted,type="e")
 
 
 plot_imputed <- function(df1,df2, showY = FALSE, type="bar") {

@@ -116,7 +116,7 @@ invisible(md.pattern(AGOG.formatted,rotate.names=TRUE))
 
 count.char <- '.x'
 count.char <- NA
-count.char = c('.x',NA)
+#count.char = c('.x',NA)
 
 row_count(AGOG.formatted,count=count.char,append=FALSE)             ### By row
 length(which(row_count(AGOG.formatted,count=count.char,append=FALSE)>0)) ### Rows missing values
@@ -128,8 +128,13 @@ colSums(row_count(AGOG.formatted,count=count.char,append=FALSE))    ### Entire D
 count.char <- NA
 tbl <- sort(col_count(AGOG.formatted,count=count.char,append=FALSE))             ### By col
 tbl <- t(tbl)
-tbl <- cbind.data.frame("Risk Factor" = row.names(tbl), "N" = tbl[,1])
 tbl <- apply(tbl, 2, rev)
+tbl[,1] <- paste0(tbl," (",round(tbl/nrow(AGOG.formatted)*100, 1),")")
+tbl <- cbind.data.frame("Risk Factor" = row.names(tbl), "n (%)" = tbl[,1])
+
+total <- length(which(row_count(AGOG.formatted,count=count.char,append=FALSE)>0))
+
+tbl <- rbind(tbl,c("Cases with >= 1 incomplete",paste0(total," (",round(total/nrow(AGOG.formatted)*100, 1),")")))
 
 clipr::write_clip(tbl)
 
@@ -137,6 +142,6 @@ clipr::write_clip(tbl)
 
 ### Get percentage of .x
 
-head(sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE))[,1],decreasing = TRUE)/nrow(AGOG.formatted)*100)
+sort(t(col_count(AGOG.formatted,count=count.char,append=FALSE))[,1],decreasing = TRUE)/nrow(AGOG.formatted)*100
 
 
