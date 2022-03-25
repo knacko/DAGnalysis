@@ -1,6 +1,7 @@
 
 #' Imputes the missing elements of a matrix
 #' @details 
+#' Should use m = 35 and maxit = 10 for final results, but m = 10 and maxit = 5 seems suitable for rough calculations
 #' @param data The data to impute
 #' @param m The number of datasets to produce. Should use > fraction of incomplete cases * 100 
 #' @param maxit Iterations for each dataset. Should use at least 20 to help determine convergence
@@ -12,11 +13,13 @@
 #' @import mice
 #' @examples
 #' @export
-impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, complete = FALSE, 
-                        show_stats = FALSE) {
+imputeData <- function(data, m = 10, maxit = 5, seed = 123, exclude = NULL, complete = FALSE, 
+                        show_stats = FALSE, ...) {
+  
+  if (!anyNA(data)) return (data)
   
   imputed <- mice(data, m=m, maxit=maxit, seed=seed, 
-                  pred=quickpred(data, method="spearman",exclude = exclude))
+                  pred=quickpred(data, method="spearman",exclude = exclude),...)
   
   if (complete == TRUE) {
     imputed <- lapply(1:m, function(i) complete(imputed),i)
@@ -40,7 +43,9 @@ impute_data <- function(data, m = 10, maxit = 10, seed = 123, exclude = NULL, co
 #' @export
 #' @examples
 getNAstats <- function(mids, count.char = NA) {
-  ### Getting missing values table
+  
+  mids <- mids$data
+  
   tbl <- sort(col_count(mids,count=count.char,append=FALSE))             ### By col
   tbl <- t(tbl)
   tbl <- apply(tbl, 2, rev)
@@ -115,7 +120,7 @@ checkDistribution <- function(mids, cols = NULL, m = 10, minNA = 0, maxit = 20, 
   
   cols <- intersect(cols, names(which(lapply(mids$imp,nrow) >= minNA))) #Get common elements
 
-  densityplot(mids,as.formula(paste("~",paste(cols,collapse=" + "))),layout=c(3,ceiling(length(cols)/3)))
+  densityplot(mids,as.formula(paste("~",paste(cols,collapse=" + "))),layout=c(3,ceiling(length(cols)/3)),xlab="Categorical variable value")
   
 }
 

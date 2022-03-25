@@ -82,19 +82,17 @@ AGOG.formatted %<>% mutate_at(binarys, funs(recode(.,"Yes" = TRUE, "No" = FALSE,
 rm(booleans,ord.factors,goodcols,numerics)
 
 #AGOG.formatted <- filter(AGOG.formatted, !is.na(Income))
-#AGOG.formatted <- na.omit(AGOG.formatted)
+AGOG.formatted <- na.omit(AGOG.formatted) #Remove all peoples with NAs
 
 #---- Impute -----------------------------------------------------------------------------------------------------------
 
-# Should use m = 35 and maxit = 10 for final results, but m = 10 and maxit = 5 seems suitable for rough calculations
-m <- 10
-maxit <- 5
+AGOG.imputes <- imputeData(AGOG.formatted, exclude = c('cec_upn', 'cancer.glioma','ufn_primary'))
 
-AGOG.imputes <- mice(AGOG.formatted, m=m, maxit=maxit, seed=123, 
-                     pred=quickpred(AGOG.formatted, method="spearman",exclude= c('cec_upn', 'cancer.glioma','ufn_primary')))
-
-AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
-
+if (is(AGOG.imputes,"mids")) {
+  AGOG.dataset <- lapply(1:m, function(i) complete(AGOG.imputes,i))
+} else {
+  AGOG.dataset <- AGOG.imputes
+}
 
 #---- Model ------------------------------------------------------------------------------------------------------------
 
