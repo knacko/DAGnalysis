@@ -72,6 +72,8 @@ summary.return.pval <- function( object, ... )
 
 AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
 
+  if (!is(data,"list")) data <- list(data)
+  
   if(is.null(exposure)) exposure <- names(data[[1]])
   exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","Cancer.glioma",confounders)]
   
@@ -100,6 +102,8 @@ AGOG.model.dags <- function(DAG,data,exposure=NULL,confounders=NULL) {
 
 AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
 
+  if (!is(data,"list")) data <- list(data)
+  
   if(is.null(exposure)) exposure <- names(data[[1]])
   
   exposure <- exposure[!exposure %in% c("cec_upn", "ufn_primary","Cancer.glioma",confounders)]
@@ -114,6 +118,7 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
     
     wgt__ <- NULL
     mod <- lapply(data, function(d){
+      #if (na.rm) d <- d[rowSums(is.na(d[, c("Cancer.glioma",exp,confounders)])) == 0,]
       glm.cluster(data=d, formula=form, family=binomial, cluster="ufn_primary")
     })
 
@@ -122,8 +127,12 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
       smm <- summary(mm[[1]])
       smm$coefficients[,"Std. Error"]
     } )
-    
-    modpool <- miceadds::pool_mi( qhat=cmod, se=semod)
+
+    modpool <- miceadds::pool_mi(qhat=cmod, se=semod)
+
+    modpool <- miceadds::pool_mi(qhat=mitools::MIextract(mod, fun=stats::coef),
+                                 u=mitools::MIextract(mod, fun=stats::vcov))
+
     modpool
   })
   
@@ -131,12 +140,14 @@ AGOG.model <- function(data,exposure=NULL,confounders=NULL) {
 
     glm <- model[[i]]
     
-    capture.var <- 2:max(2,(nlevels(data[[1]][,exposure[i]])))
+    capture.var <- 1+(1:(nlevels(data[[1]][,exposure[i]])-1))
+    
+    #capture.var <- 2:ncol(glm$t)
     
    # capture.var <- 2:max(2,(length(factor(data[[1]][,exposure[i]]))))
     
     exposure.variable <- cbind(OR = exp(coef(glm)), exp(confint(glm)),
-                               "P.value" = summary(glm)$p)[capture.var,]
+                               "P.value" = unname(glm$pval))[capture.var,]
     
     if (length(capture.var)==1) exposure.variable %<>% as.list()
 
@@ -163,7 +174,6 @@ import_dag <- function(filepath) {
   DAG = readLines(filepath)
   DAG = DAG[sapply(DAG,function(line) !grepl("^bb", line, fixed = TRUE))]
   DAG = paste(DAG,collapse="\n")
-  
   
   return(dagitty(DAG))
 }  

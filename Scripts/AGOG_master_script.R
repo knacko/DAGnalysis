@@ -14,6 +14,7 @@ lapply(list.of.packages, require, character.only = TRUE)
 options(scipen=2)
 
 source("D:/Home/School/Internships/CBDRH/DAGnalysis/Scripts/AGOG_dag_analysis.R")
+source("D:/Home/School/Internships/CBDRH/DAGnalysis/R/imputation.R")
 
 #---- Load the data ----------------------------------------------------------------------------------------------------
 setwd("D:\\Home\\School\\Internships\\CBDRH\\Data\\Data from CBDRH\\Shortcuts")
@@ -82,7 +83,7 @@ AGOG.formatted %<>% mutate_at(binarys, funs(recode(.,"Yes" = TRUE, "No" = FALSE,
 rm(booleans,ord.factors,goodcols,numerics)
 
 #AGOG.formatted <- filter(AGOG.formatted, !is.na(Income))
-AGOG.formatted <- na.omit(AGOG.formatted) #Remove all peoples with NAs
+#AGOG.formatted <- na.omit(AGOG.formatted) #Remove all peoples with NAs
 
 #---- Impute -----------------------------------------------------------------------------------------------------------
 

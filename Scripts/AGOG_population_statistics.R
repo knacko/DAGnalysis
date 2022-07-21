@@ -1,4 +1,7 @@
-plotPopStats <- function(AGOG.formatted) {
+#' Get population statistics for all the risk factors
+#' @param AGOG.formatted The formatted data frame from any of the master scripts
+#' @return dataframe with n (%) for all risk factors
+getPopStats <- function(AGOG.formatted) {
   
   AGOG.cases <- filter(AGOG.formatted, Cancer.glioma==TRUE)
   AGOG.controls <- filter(AGOG.formatted, Cancer.glioma==FALSE) 
